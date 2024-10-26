@@ -6,13 +6,28 @@ from PIL import Image, ImageTk
 from pillow_heif import register_heif_opener
 from tkinter import PhotoImage
 import datetime
-import tkinter.font as tkFont
 
 BACKGROUND_COLOR_1 = "#222222"
 BACKGROUND_COLOR_2 = "#353535"
 BACKGROUND_COLOR_3 = "#666666"
+ACTIVE_BG = "#444444"
 FOREGROUND_COLOR = "#FFFFFF"
+GREEN = "#22a14a"
+GREEN_DARK = "#166930"
 FONT = ("Poppins", 11)
+
+PROGRAM_TITLE = "Selector imatges"
+SELECTED_IMAGES_TEXT = "Seleccionades:"
+OPEN_DIRECTORY_BUTTON = "Obrir carpeta"
+FINISH_BUTTON = "Acabar"
+LOADING_IMAGES_TEXT = "Carregant imatges..."
+WARNING_TITLE = "Advertencia"
+COULD_NOT_CREATE_FOLDER_TEXT = "No s'ha pogut crear la carpeta a"
+ERROR_TITLE = "Error"
+NO_IMAGE_SELECTED_TEXT = "No hi ha cap imatge seleccionada!"
+INFO_TITLE = "Operació completada"
+SUCCESFULLY_COPIED_IMAGES = "Les imatges han sigut correctament copiades a"
+SUPPORTED_IMAGE_FORMATS = (".png", ".jpg", ".jpeg", ".gif", ".heic")
 
 
 class ImageSelectorApp:
@@ -21,14 +36,20 @@ class ImageSelectorApp:
 
         self.root = root
         self.root.configure(bg=BACKGROUND_COLOR_2)
-        self.root.title("Selector imatges")
+        self.root.title(PROGRAM_TITLE)
         self.selected_images = []
 
-        # Create frame for displaying images
         self.canvas = Canvas(
-            root, bg=BACKGROUND_COLOR_1, borderwidth=0, highlightthickness=0
+            root,
+            bg=BACKGROUND_COLOR_1,
+            borderwidth=0,
+            highlightthickness=0,
         )
-        self.scrollbar = Scrollbar(root, orient="vertical", command=self.canvas.yview)
+        self.scrollbar = Scrollbar(
+            root,
+            orient="vertical",
+            command=self.canvas.yview,
+        )
         self.scrollable_frame = Frame(self.canvas, bg=BACKGROUND_COLOR_1)
 
         self.scrollable_frame.bind(
@@ -36,52 +57,51 @@ class ImageSelectorApp:
             lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")),
         )
 
-        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        self.canvas.create_window(
+            (0, 0),
+            window=self.scrollable_frame,
+            anchor="nw",
+        )
         self.canvas.configure(yscrollcommand=self.scrollbar.set)
 
         self.canvas.pack(side="left", fill="both", expand=True)
         self.scrollbar.pack(side="right", fill="y")
 
-        # Bind mouse scroll to the canvas
-        self.canvas.bind_all("<MouseWheel>", self.on_mousewheel)  # Windows and Linux
-        self.canvas.bind_all("<Button-4>", self.on_mousewheel)  # macOS scroll up
-        self.canvas.bind_all("<Button-5>", self.on_mousewheel)  # macOS scroll down
+        self.canvas.bind_all("<MouseWheel>", self.on_mousewheel)
+        self.canvas.bind_all("<Button-4>", self.on_mousewheel)
+        self.canvas.bind_all("<Button-5>", self.on_mousewheel)
 
-        # Label to show number of selected images
         self.selected_count_label = Label(
             root,
-            text="Seleccionades: 0",
+            text=f"{SELECTED_IMAGES_TEXT}",
             fg=FOREGROUND_COLOR,
             bg=BACKGROUND_COLOR_2,
             font=FONT,
         )
         self.selected_count_label.pack(pady=10)
 
-        # Select folder button
         self.select_folder_button = Button(
             root,
-            text="Obrir carpeta",
+            text=OPEN_DIRECTORY_BUTTON,
             command=self.browse_folder,
             borderwidth=0,
             bg=BACKGROUND_COLOR_3,
             fg=FOREGROUND_COLOR,
-            activebackground=BACKGROUND_COLOR_2,
+            activebackground=ACTIVE_BG,
             font=FONT,
             width=13,
             height=1,
         )
         self.select_folder_button.pack(pady=10, padx=20)
 
-        # Save images button
         self.save_images_button = Button(
             root,
-            text="Acabar",
+            text=FINISH_BUTTON,
             command=self.send_images,
             borderwidth=0,
-            relief="solid",
-            bg="#22a14a",
-            fg="white",
-            activebackground="#AAAAAA",
+            bg=GREEN,
+            fg=FOREGROUND_COLOR,
+            activebackground=GREEN_DARK,
             font=FONT,
             width=13,
             height=1,
@@ -109,9 +129,9 @@ class ImageSelectorApp:
 
         loading_label = Label(
             self.canvas,
-            text="Carregant imatges...",
-            font=("Poppins", 12),
-            fg="white",
+            text=LOADING_IMAGES_TEXT,
+            font=FONT,
+            fg=FOREGROUND_COLOR,
             bg=BACKGROUND_COLOR_1,
             padx=10,
         )
@@ -134,7 +154,7 @@ class ImageSelectorApp:
         image_files = [
             file
             for file in os.listdir(folder_path)
-            if file.lower().endswith((".png", ".jpg", ".jpeg", ".gif", ".heic"))
+            if file.lower().endswith(SUPPORTED_IMAGE_FORMATS)
         ]
         total_images_number = len(image_files)
 
@@ -176,7 +196,9 @@ class ImageSelectorApp:
 
             self.image_labels.append(label)
 
-            loading_label.config(text=f"Carregant imatges... {i}/{total_images_number}")
+            loading_label.config(
+                text=f"{LOADING_IMAGES_TEXT} {i}/{total_images_number}"
+            )
             self.root.update()  # Update the GUI to reflect changes
 
         loading_label.place_forget()  # Remove "loading" label when images are loaded
@@ -197,15 +219,14 @@ class ImageSelectorApp:
 
     def update_selected_count(self):
         self.selected_count_label.config(
-            text=f"Seleccionades: {len(self.selected_images)}"
+            text=f"{SELECTED_IMAGES_TEXT} {len(self.selected_images)}"
         )
 
     def send_images(self):
         if not self.selected_images:
-            messagebox.showwarning("Advertencia", "No hi ha cap imatge seleccionada!")
+            messagebox.showwarning(WARNING_TITLE, NO_IMAGE_SELECTED_TEXT)
             return
 
-        # Get the user's desktop path
         desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
         folder_name = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         folder_path = os.path.join(desktop_path, folder_name)
@@ -214,7 +235,7 @@ class ImageSelectorApp:
             os.makedirs(folder_path)
         except OSError:
             messagebox.showerror(
-                "Error", f"No s'ha pogut crear la carpeta a {folder_path}"
+                ERROR_TITLE, f"{COULD_NOT_CREATE_FOLDER_TEXT} {folder_path}"
             )
             return
 
@@ -222,8 +243,8 @@ class ImageSelectorApp:
             shutil.copy(image_path, folder_path)
 
         messagebox.showinfo(
-            "Operació completada",
-            f"Les imatges han sigut correctament copiades a {folder_path}",
+            INFO_TITLE,
+            f"{SUCCESFULLY_COPIED_IMAGES} {folder_path}",
         )
         self.selected_images = []
         self.update_selected_count()

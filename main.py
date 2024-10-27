@@ -97,7 +97,7 @@ class ImageSelectorApp:
         self.save_images_button = Button(
             root,
             text=FINISH_BUTTON,
-            command=self.send_images,
+            command=self.save_images,
             borderwidth=0,
             bg=GREEN,
             fg=FOREGROUND_COLOR,
@@ -222,14 +222,22 @@ class ImageSelectorApp:
             text=f"{SELECTED_IMAGES_TEXT} {len(self.selected_images)}"
         )
 
-    def send_images(self):
+    def get_save_path(self):
+        if os.path.exists("config.txt"):
+            with open("config.txt", "r") as file:
+                path = file.read().strip()
+                if os.path.isdir(path):
+                    return path
+        return os.path.join(os.path.expanduser("~"), "Desktop")
+
+    def save_images(self):
         if not self.selected_images:
             messagebox.showwarning(WARNING_TITLE, NO_IMAGE_SELECTED_TEXT)
             return
 
-        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
-        folder_name = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        folder_path = os.path.join(desktop_path, folder_name)
+        folder_path = os.path.join(
+            self.get_save_path(), datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        )
 
         try:
             os.makedirs(folder_path)
@@ -242,10 +250,7 @@ class ImageSelectorApp:
         for image_path in self.selected_images:
             shutil.copy(image_path, folder_path)
 
-        messagebox.showinfo(
-            INFO_TITLE,
-            f"{SUCCESFULLY_COPIED_IMAGES} {folder_path}",
-        )
+        messagebox.showinfo(INFO_TITLE, f"{SUCCESFULLY_COPIED_IMAGES} {folder_path}")
         self.selected_images = []
         self.update_selected_count()
 
